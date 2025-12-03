@@ -14,12 +14,15 @@
 
 // 全局对象实例化
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(PCA9685_ADDRESS);
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire1, OLED_RESET);  // 使用Wire1独立总线
 WebServer server(HTTP_PORT);
 WebSocketsServer webSocket = WebSocketsServer(WEBSOCKET_PORT);
 
 // 全局变量实例化
 int servoAngles[NUM_SERVOS] = {DEFAULT_ANGLE, DEFAULT_ANGLE, DEFAULT_ANGLE, DEFAULT_ANGLE};
 String logBuffer = "";
+String systemIP = "Connecting...";
+String systemStatus = "Init";
 
 void setup() {
   // 初始化串口

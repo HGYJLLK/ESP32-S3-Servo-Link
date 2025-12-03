@@ -42,8 +42,9 @@ void handleSet() {
     if (servoNum >= 0 && servoNum < NUM_SERVOS && angle >= MIN_ANGLE && angle <= MAX_ANGLE) {
       setServoAngle(servoNum, angle);
 
-      String msg = "舵机" + String(servoNum) + " 设定到 " + String(angle) + "度";
-      serialPrintln(msg);
+      String serialMsg = "Servo" + String(servoNum) + " set to " + String(angle) + "deg";
+      String webMsg = "舵机" + String(servoNum) + " 设定到 " + String(angle) + "度";
+      dualLog(serialMsg, webMsg);
 
       String json = "{\"servo\":" + String(servoNum) +
                     ",\"angle\":" + String(servoAngles[servoNum]) + "}";
@@ -60,12 +61,12 @@ void handleSet() {
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
   switch(type) {
     case WStype_DISCONNECTED:
-      Serial0.printf("[%u] 断开连接\n", num);
+      Serial0.printf("[%u] WS disconnected\n", num);
       break;
     case WStype_CONNECTED:
       {
         IPAddress ip = webSocket.remoteIP(num);
-        Serial0.printf("[%u] 连接来自 %d.%d.%d.%d\n", num, ip[0], ip[1], ip[2], ip[3]);
+        Serial0.printf("[%u] WS from %d.%d.%d.%d\n", num, ip[0], ip[1], ip[2], ip[3]);
         // 发送历史日志
         webSocket.sendTXT(num, logBuffer);
       }
@@ -75,7 +76,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
 // 初始化WiFi连接
 void initWiFi() {
-  Serial0.print("正在连接WiFi: ");
+  Serial0.print("Connecting WiFi: ");
   Serial0.println(WIFI_SSID);
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -88,13 +89,20 @@ void initWiFi() {
   }
 
   if (WiFi.status() == WL_CONNECTED) {
-    Serial0.println("\nWiFi连接成功!");
-    Serial0.print("IP地址: ");
+    Serial0.println("\nWiFi OK!");
+    Serial0.print("IP: ");
     Serial0.println(WiFi.localIP());
-    serialPrintln("WiFi已连接，IP: " + WiFi.localIP().toString());
+
+    // 更新全局IP变量
+    systemIP = WiFi.localIP().toString();
+
+    dualLog("WiFi connected",
+            "WiFi已连接，IP: " + systemIP);
   } else {
-    Serial0.println("\nWiFi连接失败!");
-    serialPrintln("WiFi连接失败，请检查SSID和密码");
+    Serial0.println("\nWiFi FAILED!");
+    systemIP = "Failed";
+    dualLog("WiFi failed!",
+            "WiFi连接失败，请检查SSID和密码");
   }
 }
 
@@ -106,19 +114,22 @@ void initWebServer() {
   server.on("/angles", handleAngles);
   server.on("/set", handleSet);
   server.begin();
-  Serial0.println("HTTP服务器已启动");
+  Serial0.println("HTTP server started");
 
   // 启动WebSocket服务器
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
-  Serial0.println("WebSocket服务器已启动");
+  Serial0.println("WebSocket started");
 
-  Serial0.println("\n=== 系统就绪 ===");
-  Serial0.print("请访问: http://");
+  Serial0.println("\n=== SYSTEM READY ===");
+  Serial0.print("Visit: http://");
   Serial0.println(WiFi.localIP());
 
-  serialPrintln("=== 系统初始化完成 ===");
-  serialPrintln("请在浏览器中打开: http://" + WiFi.localIP().toString());
+  dualLog("Ready",
+          "=== 系统初始化完成 ===");
+  // Web日志显示完整URL
+  logBuffer += "请在浏览器中打开: http://" + systemIP + "\n";
+  webSocket.broadcastTXT("请在浏览器中打开: http://" + systemIP);
 }
 
 // Web服务器循环处理

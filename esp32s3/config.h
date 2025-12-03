@@ -5,12 +5,23 @@
 const char* WIFI_SSID = "GEEK2.4G";
 const char* WIFI_PASSWORD = "34163416";
 
-// ESP32-S3的I2C引脚
+// ESP32-S3的I2C引脚配置
+// I2C总线0 (Wire) - PCA9685舵机驱动
 #define SDA_PIN 21
 #define SCL_PIN 20
 
+// I2C总线1 (Wire1) - OLED屏幕（独立总线，避免冲突）
+#define OLED_SDA_PIN 17
+#define OLED_SCL_PIN 18
+
 // PCA9685 I2C地址
 #define PCA9685_ADDRESS 0x40
+
+// OLED屏幕配置（0.96寸 SSD1306）
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET -1  // 复位引脚（-1表示共用Arduino复位引脚）
+#define SCREEN_ADDRESS 0x3C  // 0.96寸屏常见地址，不行试试0x3D
 
 // 舵机通道定义（使用0,1,2,3接口）
 #define SERVO_0 0
