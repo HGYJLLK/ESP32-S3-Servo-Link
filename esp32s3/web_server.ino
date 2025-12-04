@@ -23,13 +23,14 @@ void handleMove() {
   }
 }
 
-// 获取所有舵机角度
+// 获取所有舵机角度（16个通道）
 void handleAngles() {
-  String json = "{\"angles\":[" +
-                String(servoAngles[0]) + "," +
-                String(servoAngles[1]) + "," +
-                String(servoAngles[2]) + "," +
-                String(servoAngles[3]) + "]}";
+  String json = "{\"angles\":[";
+  for (int i = 0; i < NUM_SERVOS; i++) {
+    json += String(servoAngles[i]);
+    if (i < NUM_SERVOS - 1) json += ",";
+  }
+  json += "]}";
   server.send(200, "application/json", json);
 }
 

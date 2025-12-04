@@ -142,15 +142,18 @@ void initServoSystem() {
   delay(100);
   Serial0.println("PCA9685 init OK");
 
-  // 设置舵机初始位置（中间位置135度）
+  // 设置舵机初始位置（仅初始化前4个通道，其他通道按需使用）
   systemStatus = "Setting servos...";
   updateOLEDDisplay();
 
-  for (int i = 0; i < NUM_SERVOS; i++) {
+  for (int i = 0; i < QUICK_ACCESS_SERVOS; i++) {
     setServoAngle(i, DEFAULT_ANGLE);
     delay(50);  // 稍微延迟，避免舵机同时启动
   }
-  Serial0.println("Servo init OK: 135deg");
+  Serial0.println("Servo 0-3 init OK");
+
+  // 其他通道保持角度记录为默认值，但不立即设置
+  Serial0.println("Channels 4-15 ready (not initialized)");
 
   systemStatus = "Servo Ready";
   updateOLEDDisplay();
@@ -171,8 +174,10 @@ void setServoAngle(uint8_t channel, int angle) {
   // 更新角度记录
   servoAngles[channel] = angle;
 
-  // 刷新OLED显示
-  updateOLEDDisplay();
+  // 仅当修改的是前4个通道时才刷新OLED显示（提高性能）
+  if (channel < QUICK_ACCESS_SERVOS) {
+    updateOLEDDisplay();
+  }
 }
 
 // 移动舵机

@@ -23,12 +23,9 @@ const char* WIFI_PASSWORD = "34163416";
 #define OLED_RESET -1  // 复位引脚（-1表示共用Arduino复位引脚）
 #define SCREEN_ADDRESS 0x3C  // 0.96寸屏常见地址，不行试试0x3D
 
-// 舵机通道定义（使用0,1,2,3接口）
-#define SERVO_0 0
-#define SERVO_1 1
-#define SERVO_2 2
-#define SERVO_3 3
-#define NUM_SERVOS 4
+// 舵机通道定义（PCA9685支持0-15共16个通道）
+#define NUM_SERVOS 16        // 总通道数
+#define QUICK_ACCESS_SERVOS 4  // 快速访问的通道数（OLED显示用）
 
 // 270度舵机脉冲宽度设置（500us-2500us）
 // PCA9685工作在50Hz，12位分辨率（4096步）

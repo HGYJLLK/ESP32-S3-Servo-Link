@@ -561,6 +561,57 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       justify-content: flex-end;
     }
 
+    /* 高级控制 - 16通道紧凑网格 */
+    .advanced-servo-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .advanced-servo-item {
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid var(--border);
+    }
+
+    .advanced-servo-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .advanced-servo-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+
+    .advanced-servo-angle {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--brand);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .advanced-servo-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-compact {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      font-size: 20px;
+      min-height: auto;
+      border-radius: 6px;
+    }
+
     /* ========== 桌面端三栏布局 (1200px+) ========== */
     @media (min-width: 1200px) {
       .app-container {
@@ -636,6 +687,11 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       #view-batch .batch-grid {
         grid-template-columns: repeat(4, 1fr);
       }
+
+      /* 高级控制4列布局 */
+      .advanced-servo-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
     }
 
     /* ========== 小屏手机优化 ========== */
@@ -695,6 +751,12 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
             <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
           </span>
           <span>动作脚本</span>
+        </a>
+        <a class="menu-item" onclick="switchView('advanced')">
+          <span class="menu-item-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1 0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64z"/></svg>
+          </span>
+          <span>高级控制</span>
         </a>
       </nav>
     </aside>
@@ -798,6 +860,25 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
           <!-- 动态生成 -->
         </div>
       </div>
+
+      <!-- 视图D: 高级控制 (16通道) -->
+      <div id="view-advanced" class="view">
+        <div class="card">
+          <div class="card-title">16通道快捷操作</div>
+          <div class="action-buttons">
+            <button class="btn btn-secondary" onclick="resetAll16()">全部归零 (0°)</button>
+            <button class="btn btn-primary" onclick="centerAll16()">全部居中 (135°)</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">全部通道控制 (0-15)</div>
+          <div id="advanced-grid" class="advanced-servo-grid">
+            <!-- 动态生成16个舵机控制 -->
+          </div>
+          <button class="btn btn-primary" style="width:100%;margin-top:16px" onclick="showSaveDialog()">保存当前16通道姿态</button>
+        </div>
+      </div>
     </main>
 
     <!-- 日志面板 -->
@@ -822,7 +903,7 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
   <script>
     // ========== 全局变量 ==========
     var ws;
-    var angles = [135, 135, 135, 135];
+    var angles = [135, 135, 135, 135, 135, 135, 135, 135, 135, 135, 135, 135, 135, 135, 135, 135];
     var stepSize = 5;
     var scripts = [];
 
@@ -875,6 +956,8 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
 
       if (viewId === 'scripts') {
         renderScripts();
+      } else if (viewId === 'advanced') {
+        renderAdvancedGrid();
       }
     }
 
@@ -968,6 +1051,87 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       }
     }
 
+    // ========== 高级控制 (16通道) ==========
+    function renderAdvancedGrid() {
+      const container = document.getElementById('advanced-grid');
+      let html = '';
+
+      for (let i = 0; i < 16; i++) {
+        html += `
+          <div class="advanced-servo-item">
+            <div class="advanced-servo-info">
+              <div class="advanced-servo-label">S${i}</div>
+              <div class="advanced-servo-angle" id="advanced-angle${i}">${angles[i]}°</div>
+            </div>
+            <div class="advanced-servo-controls">
+              <button class="btn btn-danger btn-compact" onclick="adjustAdvanced(${i}, -1)">−</button>
+              <button class="btn btn-success btn-compact" onclick="adjustAdvanced(${i}, 1)">+</button>
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    async function adjustAdvanced(servo, direction) {
+      const currentAngle = angles[servo];
+      let newAngle = currentAngle + (direction * stepSize);
+      newAngle = Math.max(0, Math.min(270, newAngle));
+
+      try {
+        const response = await fetch('/set?servo=' + servo + '&angle=' + newAngle);
+        const data = await response.json();
+        if (data.angle !== undefined) {
+          angles[data.servo] = data.angle;
+          updateAdvancedAngle(data.servo, data.angle);
+          // Also update main view if visible
+          updateAngleDisplay(data.servo, data.angle);
+        }
+      } catch (error) {
+        console.error('舵机' + servo + '调整失败:', error);
+      }
+    }
+
+    function updateAdvancedAngle(servo, angle) {
+      const element = document.getElementById('advanced-angle' + servo);
+      if (element) {
+        element.textContent = angle + '°';
+      }
+    }
+
+    async function resetAll16() {
+      for (let i = 0; i < 16; i++) {
+        try {
+          const response = await fetch('/set?servo=' + i + '&angle=0');
+          const data = await response.json();
+          if (data.angle !== undefined) {
+            angles[data.servo] = data.angle;
+            updateAdvancedAngle(data.servo, data.angle);
+            updateAngleDisplay(data.servo, data.angle);
+          }
+        } catch (error) {
+          console.error('舵机' + i + '归零失败:', error);
+        }
+      }
+    }
+
+    async function centerAll16() {
+      for (let i = 0; i < 16; i++) {
+        try {
+          const response = await fetch('/set?servo=' + i + '&angle=135');
+          const data = await response.json();
+          if (data.angle !== undefined) {
+            angles[data.servo] = data.angle;
+            updateAdvancedAngle(data.servo, data.angle);
+            updateAngleDisplay(data.servo, data.angle);
+          }
+        } catch (error) {
+          console.error('舵机' + i + '居中失败:', error);
+        }
+      }
+    }
+
     // ========== 动作脚本管理 ==========
     function loadScripts() {
       const saved = localStorage.getItem('servoScripts');
@@ -1029,13 +1193,16 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
 
       addLog('[执行] 姿态: ' + script.name);
 
-      for (let i = 0; i < 4; i++) {
+      // Support both old 4-channel and new 16-channel scripts
+      const numChannels = script.angles.length;
+      for (let i = 0; i < numChannels; i++) {
         try {
           const response = await fetch('/set?servo=' + i + '&angle=' + script.angles[i]);
           const data = await response.json();
           if (data.angle !== undefined) {
             angles[data.servo] = data.angle;
             updateAngleDisplay(data.servo, data.angle);
+            updateAdvancedAngle(data.servo, data.angle);
           }
         } catch (error) {
           console.error('舵机' + i + '执行失败:', error);
@@ -1047,20 +1214,23 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       const container = document.getElementById('scriptList');
 
       if (scripts.length === 0) {
-        container.innerHTML = '<div class="card"><p style="text-align:center;color:var(--text-tertiary);padding:40px 20px;">暂无保存的姿态<br><small>在"舵机调试"中保存当前姿态</small></p></div>';
+        container.innerHTML = '<div class="card"><p style="text-align:center;color:var(--text-tertiary);padding:40px 20px;">暂无保存的姿态<br><small>在"舵机调试"或"高级控制"中保存当前姿态</small></p></div>';
         return;
       }
 
-      container.innerHTML = scripts.map(script => `
-        <div class="script-card">
-          <div class="script-name">${script.name}</div>
-          <div class="script-info">[${script.angles.join(', ')}]° • ${script.timestamp}</div>
-          <div class="script-actions">
-            <button class="btn btn-success" onclick="executeScript(${script.id})" style="flex:1">执行</button>
-            <button class="btn btn-danger" onclick="deleteScript(${script.id})" style="flex:1">删除</button>
+      container.innerHTML = scripts.map(script => {
+        const channelLabel = script.angles.length === 16 ? '16通道' : '4通道';
+        return `
+          <div class="script-card">
+            <div class="script-name">${script.name} <small style="color:var(--text-tertiary)">[${channelLabel}]</small></div>
+            <div class="script-info">[${script.angles.join(', ')}]° • ${script.timestamp}</div>
+            <div class="script-actions">
+              <button class="btn btn-success" onclick="executeScript(${script.id})" style="flex:1">执行</button>
+              <button class="btn btn-danger" onclick="deleteScript(${script.id})" style="flex:1">删除</button>
+            </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     // ========== 日志 ==========
@@ -1079,9 +1249,13 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       fetch('/angles')
         .then(response => response.json())
         .then(data => {
-          for (let i = 0; i < 4; i++) {
+          // Update all 16 channels
+          for (let i = 0; i < 16; i++) {
             angles[i] = data.angles[i];
-            updateAngleDisplay(i, data.angles[i]);
+            // Update displays for first 4 servos in tuning view
+            if (i < 4) {
+              updateAngleDisplay(i, data.angles[i]);
+            }
           }
         })
         .catch(error => {

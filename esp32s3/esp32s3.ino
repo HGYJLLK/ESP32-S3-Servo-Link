@@ -18,8 +18,13 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire1, OLED_RESET);  // �
 WebServer server(HTTP_PORT);
 WebSocketsServer webSocket = WebSocketsServer(WEBSOCKET_PORT);
 
-// 全局变量实例化
-int servoAngles[NUM_SERVOS] = {DEFAULT_ANGLE, DEFAULT_ANGLE, DEFAULT_ANGLE, DEFAULT_ANGLE};
+// 全局变量实例化（16个通道）
+int servoAngles[NUM_SERVOS] = {
+  DEFAULT_ANGLE, DEFAULT_ANGLE, DEFAULT_ANGLE, DEFAULT_ANGLE,  // 0-3
+  DEFAULT_ANGLE, DEFAULT_ANGLE, DEFAULT_ANGLE, DEFAULT_ANGLE,  // 4-7
+  DEFAULT_ANGLE, DEFAULT_ANGLE, DEFAULT_ANGLE, DEFAULT_ANGLE,  // 8-11
+  DEFAULT_ANGLE, DEFAULT_ANGLE, DEFAULT_ANGLE, DEFAULT_ANGLE   // 12-15
+};
 String logBuffer = "";
 String systemIP = "Connecting...";
 String systemStatus = "Init";
