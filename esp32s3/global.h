@@ -8,6 +8,7 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <WebSocketsServer.h>
+#include <WiFiManager.h>  // WiFi配置管理库
 #include "config.h"
 
 // 全局对象

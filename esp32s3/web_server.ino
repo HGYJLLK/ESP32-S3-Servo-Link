@@ -75,36 +75,85 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
   }
 }
 
-// 初始化WiFi连接
+// WiFiManager配置门户回调函数（进入AP模式时触发）
+void configModeCallback(WiFiManager *myWiFiManager) {
+  Serial0.println("Entering config portal mode");
+  Serial0.print("AP SSID: ");
+  Serial0.println(myWiFiManager->getConfigPortalSSID());
+  Serial0.println("AP IP: 192.168.4.1");
+
+  // OLED显示配置模式信息
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+
+  display.setCursor(0, 0);
+  display.println("WiFi Config Mode");
+  display.println("--------------------");
+
+  display.setCursor(0, 20);
+  display.println("Connect to WiFi:");
+  display.setTextSize(1);
+  display.setCursor(0, 32);
+  display.println("ESP32-Servo-Setup");
+
+  display.setCursor(0, 48);
+  display.println("Then open:");
+  display.setCursor(0, 56);
+  display.println("192.168.4.1");
+
+  display.display();
+}
+
+// 初始化WiFi连接（使用WiFiManager）
 void initWiFi() {
-  Serial0.print("Connecting WiFi: ");
-  Serial0.println(WIFI_SSID);
+  WiFiManager wifiManager;
 
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  // 设置配置门户超时（180秒 = 3分钟）
+  wifiManager.setConfigPortalTimeout(180);
 
-  int attempts = 0;
-  while (WiFi.status() != WL_CONNECTED && attempts < 30) {
-    delay(500);
-    Serial0.print(".");
-    attempts++;
+  // 设置进入配置门户时的回调函数
+  wifiManager.setAPCallback(configModeCallback);
+
+  // OLED显示提示信息
+  systemStatus = "WiFi init...";
+  updateOLEDDisplay();
+
+  Serial0.println("Starting WiFi configuration...");
+  Serial0.println("If no saved WiFi, AP will start:");
+  Serial0.println("  SSID: ESP32-Servo-Setup");
+  Serial0.println("  IP: 192.168.4.1");
+
+  // 尝试自动连接或启动配置门户
+  // 热点名称: ESP32-Servo-Setup
+  // 如果连接失败，会创建热点让用户配置
+  if (!wifiManager.autoConnect("ESP32-Servo-Setup")) {
+    Serial0.println("Failed to connect and timeout");
+    systemIP = "Config Timeout";
+    systemStatus = "WiFi Timeout";
+    updateOLEDDisplay();
+
+    dualLog("WiFi timeout!",
+            "WiFi配置超时，3秒后重启");
+    delay(3000);
+    // 重启ESP32重新尝试
+    ESP.restart();
   }
 
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial0.println("\nWiFi OK!");
-    Serial0.print("IP: ");
-    Serial0.println(WiFi.localIP());
+  // 成功连接WiFi
+  Serial0.println("\nWiFi connected!");
+  Serial0.print("SSID: ");
+  Serial0.println(WiFi.SSID());
+  Serial0.print("IP: ");
+  Serial0.println(WiFi.localIP());
 
-    // 更新全局IP变量
-    systemIP = WiFi.localIP().toString();
+  // 更新全局IP变量
+  systemIP = WiFi.localIP().toString();
+  systemStatus = "WiFi OK";
+  updateOLEDDisplay();
 
-    dualLog("WiFi connected",
-            "WiFi已连接，IP: " + systemIP);
-  } else {
-    Serial0.println("\nWiFi FAILED!");
-    systemIP = "Failed";
-    dualLog("WiFi failed!",
-            "WiFi连接失败，请检查SSID和密码");
-  }
+  dualLog("WiFi connected",
+          "WiFi已连接: " + WiFi.SSID() + ", IP: " + systemIP);
 }
 
 // 初始化Web服务器
