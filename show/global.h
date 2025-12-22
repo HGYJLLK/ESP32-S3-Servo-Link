@@ -15,11 +15,12 @@ extern WebSocketsServer webSocket;
 extern AccelStepper stepperVertical;
 extern AccelStepper stepperHorizontal;
 
-// 当前角度数组
+// 当前角度数组 (12个舵机)
 extern int currentAngles[TOTAL_SERVOS];
 
-// 360度舵机中点数组 (可通过Web界面调整)
-extern int servo360Centers[NUM_SERVOS_360];
+// 小力舵机左右值数组 (8个小力舵机: 0-3, 8-11)
+extern int smallServoLeftValues[8];  // 左值(松)
+extern int smallServoRightValues[8]; // 右值(紧)
 
 // 步进电机位置
 extern long verticalPosition;

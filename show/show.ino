@@ -1,6 +1,6 @@
 // show.ino - 主程序入口
 // ESP32-S3展示控制系统
-// 控制: 4x 360度舵机, 4x 180度舵机, 5x 步进电机(丝杆)
+// 控制: 12x 180度SG90舵机 (0-3小力, 4-7大力, 8-11小力), 5x 步进电机(丝杆)
 
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
@@ -23,8 +23,9 @@ AccelStepper stepperVertical(AccelStepper::DRIVER, STEPPER_VERTICAL_STEP, STEPPE
 AccelStepper stepperHorizontal(AccelStepper::DRIVER, STEPPER_HORIZONTAL_STEP, STEPPER_HORIZONTAL_DIR);
 
 // 全局变量
-int currentAngles[TOTAL_SERVOS];
-int servo360Centers[NUM_SERVOS_360];
+int currentAngles[TOTAL_SERVOS];           // 12个舵机的当前角度
+int smallServoLeftValues[8];               // 8个小力舵机的左值(松)
+int smallServoRightValues[8];              // 8个小力舵机的右值(紧)
 long verticalPosition = 0;
 long horizontalPosition = 0;
 String logBuffer = "";

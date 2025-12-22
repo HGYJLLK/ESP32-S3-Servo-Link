@@ -16,19 +16,16 @@ const char* WIFI_PASSWORD = "34163416";
 #define I2C_SDA 21
 #define I2C_SCL 20
 
-// 舵机配置（注意：0-3是小力360度舵机，4-7是大力180度舵机）
-#define NUM_SERVOS_360 4     // 360度舵机数量 (通道0-3，小力舵机)
-#define NUM_SERVOS_180 4     // 180度舵机数量 (通道4-7，大力舵机)
-#define TOTAL_SERVOS 8       // 总舵机数量
-#define SERVO_360_START 0    // 360度舵机起始通道
-#define SERVO_180_START 4    // 180度舵机起始通道
+// 舵机配置（全部改为180度SG90舵机）
+#define TOTAL_SERVOS 12      // 总舵机数量
+#define NUM_SMALL_SERVOS_A 4 // 小力舵机组A (通道0-3)
+#define NUM_BIG_SERVOS 4     // 大力舵机 (通道4-7)
+#define NUM_SMALL_SERVOS_B 4 // 小力舵机组B (通道8-11)
 
-// 360度舵机中点偏移量 (针对每个舵机可调整)
-#define SERVO_360_CENTER_0 90  // 通道0中点角度
-#define SERVO_360_CENTER_1 90  // 通道1中点角度
-#define SERVO_360_CENTER_2 90  // 通道2中点角度
-#define SERVO_360_CENTER_3 90  // 通道3中点角度
-#define SERVO_360_MOVE_ANGLE 10  // 360度舵机移动角度
+// 小力舵机默认左右值（松紧控制）
+#define DEFAULT_LEFT_VALUE 0    // 左值（松）默认0度
+#define DEFAULT_RIGHT_VALUE 180 // 右值（紧）默认180度
+#define DEFAULT_CENTER_VALUE 90 // 中间值默认90度
 
 // 步进电机配置
 #define NUM_STEPPERS 5
@@ -46,9 +43,12 @@ const char* WIFI_PASSWORD = "34163416";
 // 步进电机参数
 #define STEPS_PER_REV 200      // 每圈步数 (1.8度步进电机)
 #define MICROSTEPS 16          // 细分数
-#define DEFAULT_SPEED 1000     // 默认速度 (steps/s)
-#define MAX_SPEED 2000         // 最大速度
-#define ACCELERATION 500       // 加速度
+
+// 步进电机速度参数 (已优化提速)
+// 提示: 如果电机丢步、抖动或发出异响，适当降低这些值
+#define DEFAULT_SPEED 3000     // 默认速度 (steps/s) - 原1000，提升3倍
+#define MAX_SPEED 5000         // 最大速度 (steps/s) - 原2000，提升2.5倍
+#define ACCELERATION 2000      // 加速度 (steps/s²) - 原500，提升4倍
 
 // Web服务器配置
 #define WEB_SERVER_PORT 80
