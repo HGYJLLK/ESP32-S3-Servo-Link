@@ -57,27 +57,9 @@ void smoothMoveTwoServos(int ch1, int target1, int ch2, int target2, int stepSiz
   currentAngles[ch2] = target2;
 }
 
-// 动作1: 垂直丝杆上10000步后再下10000步
+// 动作1: 已禁用（垂直丝杆运动危险，待设置限位后再启用）
 void executeAction1() {
-  addLog("动作1开始: 垂直丝杆上升");
-  moveVertical(10000);
-
-  // 等待运动完成
-  while (stepperVertical.isRunning()) {
-    stepperVertical.run();
-    delay(1);
-  }
-
-  addLog("动作1: 垂直丝杆下降");
-  moveVertical(-10000);
-
-  // 等待运动完成
-  while (stepperVertical.isRunning()) {
-    stepperVertical.run();
-    delay(1);
-  }
-
-  addLog("动作1完成");
+  addLog("动作1已禁用: 请先设置垂直丝杆限位");
 }
 
 // 动作2: 大力6摆动 (125->170->80->125)

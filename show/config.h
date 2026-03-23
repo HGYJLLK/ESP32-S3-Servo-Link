@@ -22,10 +22,10 @@ const char* WIFI_PASSWORD = "34163416";
 #define NUM_BIG_SERVOS 4     // 大力舵机 (通道4-7)
 #define NUM_SMALL_SERVOS_B 4 // 小力舵机组B (通道8-11)
 
-// 小力舵机默认左右值（松紧控制）
+// 小力舵机默认左右值（松紧控制，270度大力舵机）
 #define DEFAULT_LEFT_VALUE 0    // 左值（松）默认0度
-#define DEFAULT_RIGHT_VALUE 180 // 右值（紧）默认180度
-#define DEFAULT_CENTER_VALUE 90 // 中间值默认90度
+#define DEFAULT_RIGHT_VALUE 270 // 右值（紧）默认270度
+#define DEFAULT_CENTER_VALUE 135 // 中间值默认135度（270度舵机中点）
 
 // 步进电机配置
 #define NUM_STEPPERS 5

@@ -100,12 +100,27 @@ void initWebServer() {
     }
   });
 
-  // 移动到中间值(90度)
+  // 直接设置小力舵机角度 (0-270度)
+  server.on("/smallservo/set", []() {
+    if (server.hasArg("servo") && server.hasArg("angle")) {
+      int servo = server.arg("servo").toInt();
+      int angle = server.arg("angle").toInt();
+      angle = constrain(angle, 0, 270);
+      setServoAngle270(servo, angle);
+      addLog("章鱼抓" + String(servo) + "设置到: " + String(angle) + "°");
+      String json = "{\"servo\":" + String(servo) + ",\"angle\":" + String(angle) + "}";
+      server.send(200, "application/json", json);
+    } else {
+      server.send(400, "application/json", "{\"error\":\"missing parameters\"}");
+    }
+  });
+
+  // 移动到中间值(135度)
   server.on("/smallservo/center", []() {
     if (server.hasArg("servo")) {
       int servo = server.arg("servo").toInt();
       moveSmallServoToCenter(servo);
-      server.send(200, "application/json", "{\"status\":\"ok\",\"angle\":90}");
+      server.send(200, "application/json", "{\"status\":\"ok\",\"angle\":" + String(DEFAULT_CENTER_VALUE) + "}");
     } else {
       server.send(400, "application/json", "{\"error\":\"missing parameters\"}");
     }
@@ -222,11 +237,10 @@ void initWebServer() {
 
   // === 动作脚本API ===
 
-  // 动作脚本 - 动作1: 垂直丝杆上下运动
+  // 动作脚本 - 动作1: 已禁用（垂直丝杆运动危险，待设置限位后再启用）
   server.on("/action/action1", []() {
-    addLog("执行动作1: 垂直丝杆上下运动");
-    executeAction1();
-    server.send(200, "application/json", "{\"status\":\"ok\"}");
+    addLog("动作1已禁用: 请先设置垂直丝杆限位");
+    server.send(403, "application/json", "{\"error\":\"action1 disabled, set vertical limits first\"}");
   });
 
   // 动作脚本 - 动作2: 大力6摆动

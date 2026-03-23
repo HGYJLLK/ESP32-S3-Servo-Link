@@ -515,21 +515,15 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
   <div class="container">
     <!-- 视图1: 舵机控制 -->
     <div id="view-servos" class="view active">
-      <!-- 小力舵机组A (通道0-3) -->
-      <div class="card">
-        <div class="card-title">小力舵机 0-3 (松紧控制)</div>
-        <div id="smallServosA"></div>
-      </div>
-
       <!-- 大力舵机 (通道4-7) -->
       <div class="card">
         <div class="card-title">大力舵机 4-7 (角度控制)</div>
         <div id="bigServos"></div>
       </div>
 
-      <!-- 小力舵机组B (通道8-11) -->
+      <!-- 章鱼抓 (通道8-11) -->
       <div class="card">
-        <div class="card-title">小力舵机 8-11 (松紧控制)</div>
+        <div class="card-title">章鱼抓 9-11 (松紧控制)</div>
         <div id="smallServosB"></div>
       </div>
 
@@ -637,7 +631,7 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
     let ws;
     let angles = new Array(12).fill(90);  // 12个舵机当前角度
     let leftValues = new Array(8).fill(0);   // 8个小力舵机左值
-    let rightValues = new Array(8).fill(180); // 8个小力舵机右值
+    let rightValues = new Array(8).fill(270); // 8个小力舵机右值（270度大力舵机）
     let scripts = [];
 
     // ========== WebSocket ==========
@@ -693,7 +687,7 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       return `
         <div class="servo-group">
           <div class="servo-header">
-            <span class="servo-label">小力舵机 ${channel}</span>
+            <span class="servo-label">章鱼抓 ${channel}</span>
             <span class="servo-angle" id="angle-${channel}">${angles[channel]}°</span>
           </div>
           <div class="small-servo-controls">
@@ -701,15 +695,15 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
               <button class="btn btn-success" onclick="moveSmallServo(${channel}, 'left')">松开</button>
               <button class="btn btn-danger" onclick="moveSmallServo(${channel}, 'right')">抓紧</button>
             </div>
-            <button class="btn btn-secondary" onclick="moveSmallServo(${channel}, 'center')">居中 (90°)</button>
+            <button class="btn btn-secondary" onclick="moveSmallServo(${channel}, 'center')">居中 (135°)</button>
             <div class="small-servo-config">
               <label>左值(松):</label>
-              <input type="number" id="left-${channel}" value="${leftValues[idx]}" min="0" max="90">
+              <input type="number" id="left-${channel}" value="${leftValues[idx]}" min="0" max="270">
               <button class="btn btn-primary" onclick="setSmallServoValue(${channel}, 'left')">设定</button>
             </div>
             <div class="small-servo-config">
               <label>右值(紧):</label>
-              <input type="number" id="right-${channel}" value="${rightValues[idx]}" min="90" max="180">
+              <input type="number" id="right-${channel}" value="${rightValues[idx]}" min="0" max="270">
               <button class="btn btn-primary" onclick="setSmallServoValue(${channel}, 'right')">设定</button>
             </div>
           </div>
@@ -739,13 +733,6 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
     }
 
     function renderServoControls() {
-      // 小力舵机组A (0-3)
-      let htmlA = '';
-      for (let i = 0; i <= 3; i++) {
-        htmlA += createSmallServoControl(i);
-      }
-      document.getElementById('smallServosA').innerHTML = htmlA;
-
       // 大力舵机 (4-7)
       let htmlBig = '';
       for (let i = 4; i <= 7; i++) {
@@ -753,9 +740,9 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       }
       document.getElementById('bigServos').innerHTML = htmlBig;
 
-      // 小力舵机组B (8-11)
+      // 章鱼抓 (9-11)
       let htmlB = '';
-      for (let i = 8; i <= 11; i++) {
+      for (let i = 9; i <= 11; i++) {
         htmlB += createSmallServoControl(i);
       }
       document.getElementById('smallServosB').innerHTML = htmlB;
@@ -962,12 +949,14 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
         try {
           let response;
 
-          if (i <= 3 || (i >= 8 && i <= 11)) {
-            // 小力舵机 - 直接设置角度
-            response = await fetch('/smallservo/moveleft?servo=' + i);
-          } else {
+          if (i >= 9 && i <= 11) {
+            // 章鱼抓 - 使用保存的角度
+            response = await fetch('/smallservo/set?servo=' + i + '&angle=' + script.angles[i]);
+          } else if (i >= 4 && i <= 7) {
             // 大力舵机
             response = await fetch('/bigservo/set?servo=' + i + '&angle=' + script.angles[i]);
+          } else {
+            continue; // 通道0-3未使用，跳过
           }
 
           const data = await response.json();

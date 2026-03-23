@@ -11,9 +11,9 @@ int getSmallServoIndex(int channel) {
   return -1;  // 无效通道
 }
 
-// 判断是否为小力舵机
+// 判断是否为章鱼抓舵机 (通道9-11)
 bool isSmallServo(int channel) {
-  return (channel >= 0 && channel <= 3) || (channel >= 8 && channel <= 11);
+  return (channel >= 9 && channel <= 11);
 }
 
 // 判断是否为大力舵机
@@ -33,13 +33,9 @@ void initServoSystem() {
     smallServoRightValues[i] = DEFAULT_RIGHT_VALUE;  // 默认右值180度(紧)
   }
 
-  // 设置所有小力舵机到中间位置 (90度)
-  for (int ch = 0; ch <= 3; ch++) {
-    setServoAngle(ch, DEFAULT_CENTER_VALUE);
-    currentAngles[ch] = DEFAULT_CENTER_VALUE;
-  }
-  for (int ch = 8; ch <= 11; ch++) {
-    setServoAngle(ch, DEFAULT_CENTER_VALUE);
+  // 设置章鱼抓到中间位置 (135度，270度舵机中点，通道9-11)
+  for (int ch = 9; ch <= 11; ch++) {
+    setServoAngle270(ch, DEFAULT_CENTER_VALUE);
     currentAngles[ch] = DEFAULT_CENTER_VALUE;
   }
 
@@ -60,19 +56,28 @@ void initServoSystem() {
   addLog("舵机系统初始化完成 - 12个SG90舵机");
 }
 
-// 设置舵机角度 (0-180度)
+// 设置舵机角度 (0-180度，用于大力舵机通道4-7)
 void setServoAngle(int channel, int angle) {
   if (channel < 0 || channel >= TOTAL_SERVOS) {
     Serial.println("Invalid servo channel");
     return;
   }
 
-  // 限制角度范围
   angle = constrain(angle, 0, 180);
-
-  // 将角度转换为脉冲宽度
   int pulse = map(angle, 0, 180, SERVOMIN, SERVOMAX);
+  pwm.setPWM(channel, 0, pulse);
+  currentAngles[channel] = angle;
+}
 
+// 设置舵机角度 (0-270度，用于小力舵机通道0-3, 8-11)
+void setServoAngle270(int channel, int angle) {
+  if (channel < 0 || channel >= TOTAL_SERVOS) {
+    Serial.println("Invalid servo channel");
+    return;
+  }
+
+  angle = constrain(angle, 0, 270);
+  int pulse = map(angle, 0, 270, SERVOMIN, SERVOMAX);
   pwm.setPWM(channel, 0, pulse);
   currentAngles[channel] = angle;
 }
@@ -117,10 +122,10 @@ void setSmallServoLeft(int channel, int leftValue) {
     return;
   }
 
-  leftValue = constrain(leftValue, 0, 180);
+  leftValue = constrain(leftValue, 0, 270);
   smallServoLeftValues[idx] = leftValue;
 
-  String logMsg = "小力舵机" + String(channel) + "左值(松)设为: " + String(leftValue) + "°";
+  String logMsg = "章鱼抓" + String(channel) + "左值(松)设为: " + String(leftValue) + "°";
   Serial.println(logMsg);
   addLog(logMsg);
 }
@@ -133,10 +138,10 @@ void setSmallServoRight(int channel, int rightValue) {
     return;
   }
 
-  rightValue = constrain(rightValue, 0, 180);
+  rightValue = constrain(rightValue, 0, 270);
   smallServoRightValues[idx] = rightValue;
 
-  String logMsg = "小力舵机" + String(channel) + "右值(紧)设为: " + String(rightValue) + "°";
+  String logMsg = "章鱼抓" + String(channel) + "右值(紧)设为: " + String(rightValue) + "°";
   Serial.println(logMsg);
   addLog(logMsg);
 }
@@ -150,9 +155,9 @@ void moveSmallServoToLeft(int channel) {
   }
 
   int targetAngle = smallServoLeftValues[idx];
-  setServoAngle(channel, targetAngle);
+  setServoAngle270(channel, targetAngle);
 
-  String logMsg = "小力舵机" + String(channel) + "松开: " + String(targetAngle) + "°";
+  String logMsg = "章鱼抓" + String(channel) + "松开: " + String(targetAngle) + "°";
   Serial.println(logMsg);
   addLog(logMsg);
 }
@@ -166,9 +171,9 @@ void moveSmallServoToRight(int channel) {
   }
 
   int targetAngle = smallServoRightValues[idx];
-  setServoAngle(channel, targetAngle);
+  setServoAngle270(channel, targetAngle);
 
-  String logMsg = "小力舵机" + String(channel) + "抓紧: " + String(targetAngle) + "°";
+  String logMsg = "章鱼抓" + String(channel) + "抓紧: " + String(targetAngle) + "°";
   Serial.println(logMsg);
   addLog(logMsg);
 }
@@ -180,9 +185,9 @@ void moveSmallServoToCenter(int channel) {
     return;
   }
 
-  setServoAngle(channel, DEFAULT_CENTER_VALUE);
+  setServoAngle270(channel, DEFAULT_CENTER_VALUE);
 
-  String logMsg = "小力舵机" + String(channel) + "居中: 90°";
+  String logMsg = "章鱼抓" + String(channel) + "居中: 135°";
   Serial.println(logMsg);
   addLog(logMsg);
 }
